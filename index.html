@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>가위바위보 룰렛</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #fffdfd;
+      color: #263039;
+      font-family: system-ui, sans-serif;
+      text-align: center;
+    }
+    main {
+      width: min(100% - 32px, 460px);
+      margin-inline: auto;
+      padding-block: 22px 16px;
+    }
+    h1 { margin: 0; font-size: clamp(21px, 6.5vw, 32px); }
+    #result {
+      margin: 22px 0 26px;
+      min-height: 1.25em;
+      color: #d5252b;
+      font-size: clamp(30px, 8.5vw, 44px);
+      font-weight: 900;
+      line-height: 1.25;
+    }
+    .roulette { position: relative; width: min(100%, 306px); margin: auto; }
+    .pointer {
+      position: absolute;
+      z-index: 2;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-inline: 16px solid transparent;
+      border-bottom: 29px solid #222;
+      filter: drop-shadow(0 2px 2px #0004);
+    }
+    #wheel {
+      position: relative;
+      aspect-ratio: 1;
+      border: 6px solid #333;
+      border-radius: 50%;
+      background: conic-gradient(from -30deg,
+        #49a447 0deg 120deg, #ff494d 120deg 240deg, #2194e9 240deg 360deg);
+      box-shadow: 0 -3px 13px #0003, inset 0 0 10px #0002;
+    }
+    .label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: clamp(30px, 10vw, 42px);
+      line-height: 1;
+      filter: drop-shadow(0 2px 2px #0005);
+    }
+    .paper { left: 50%; top: 24%; }
+    .scissors { left: 72.5%; top: 63%; }
+    .rock { left: 27.5%; top: 63%; }
+    .hub {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      aspect-ratio: 1;
+      border: 4px solid #333;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 4px #0004;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 0.93fr 1.07fr;
+      gap: 10px;
+      width: min(100%, 312px);
+      margin: 26px auto 0;
+    }
+    button {
+      min-height: 56px;
+      padding: 8px 4px;
+      border: 0;
+      border-radius: 12px;
+      background: #1875cf;
+      color: white;
+      box-shadow: 0 3px 5px #0003;
+      font: inherit;
+      font-size: clamp(15px, 5.2vw, 22px);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #repeat { background: #c74e00; color: white; }
+    button:focus-visible { outline: 3px solid #263039; outline-offset: 3px; }
+    button[aria-disabled="true"] { cursor: wait; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🎯 가위바위보 룰렛 🎯</h1>
+    <p id="result" role="status" aria-atomic="true">준비!</p>
+    <div class="roulette" aria-hidden="true">
+      <div class="pointer"></div>
+      <div id="wheel">
+        <span class="label scissors">✌️</span>
+        <span class="label rock">👊</span>
+        <span class="label paper">✋</span>
+      </div>
+      <div class="hub"></div>
+    </div>
+    <div class="controls">
+      <button id="spin" type="button">🎡 돌리기</button>
+      <button id="repeat" type="button">🔄 다시 돌리기</button>
+    </div>
+  </main>
+
+  <script>
+    const choices = ['보 ✋', '가위 ✌️', '바위 👊'];
+    const wheel = document.getElementById('wheel');
+    const result = document.getElementById('result');
+    const button = document.getElementById('spin');
+    const repeat = document.getElementById('repeat');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const labels = [...wheel.querySelectorAll('.label')];
+    let angle = 0;
+    let spinning = false;
+
+    async function spin() {
+      if (spinning) return;
+
+      spinning = true;
+      button.setAttribute('aria-disabled', 'true');
+      repeat.setAttribute('aria-disabled', 'true');
+      result.textContent = '도는 중…';
+
+      // 각 칸의 손 모양을 위쪽 화살표에 맞춘다.
+      const winner = Math.floor(Math.random() * choices.length);
+      const target = (360 - winner * 120) % 360;
+      const distance = (target - angle + 360) % 360;
+      const end = angle + 5 * 360 + distance;
+
+      if (!reducedMotion.matches) {
+        const animation = wheel.animate(
+          [{ transform: 'rotate(' + angle + 'deg)' },
+           { transform: 'rotate(' + end + 'deg)' }],
+          { duration: 3400, easing: 'cubic-bezier(0.12, 0.65, 0.2, 1)' }
+        );
+        for (const label of labels) {
+          label.animate([{ rotate: -angle + 'deg' }, { rotate: -end + 'deg' }],
+            { duration: 3400, easing: 'cubic-bezier(0.12, 0.65, 0.2, 1)' });
+        }
+        await animation.finished;
+      }
+
+      angle = target;
+      wheel.style.transform = 'rotate(' + angle + 'deg)';
+      for (const label of labels) label.style.rotate = -angle + 'deg';
+      result.textContent = choices[winner];
+      repeat.removeAttribute('aria-disabled');
+      button.removeAttribute('aria-disabled');
+      spinning = false;
+    }
+
+    button.addEventListener('click', spin);
+    repeat.addEventListener('click', spin);
+  </script>
+</body>
+</html>
