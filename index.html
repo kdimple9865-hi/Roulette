@@ -1,166 +1,185 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>가위바위보 룰렛</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #fffdfd;
-      color: #263039;
-      font-family: system-ui, sans-serif;
-      text-align: center;
-    }
-    main {
-      width: min(100% - 32px, 460px);
-      margin-inline: auto;
-      padding-block: 22px 16px;
-    }
-    h1 { margin: 0; font-size: clamp(21px, 6.5vw, 32px); }
-    #result {
-      margin: 22px 0 26px;
-      min-height: 1.25em;
-      color: #d5252b;
-      font-size: clamp(30px, 8.5vw, 44px);
-      font-weight: 900;
-      line-height: 1.25;
-    }
-    .roulette { position: relative; width: min(100%, 306px); margin: auto; }
-    .pointer {
-      position: absolute;
-      z-index: 2;
-      top: -13px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-inline: 16px solid transparent;
-      border-bottom: 29px solid #222;
-      filter: drop-shadow(0 2px 2px #0004);
-    }
-    #wheel {
-      position: relative;
-      aspect-ratio: 1;
-      border: 6px solid #333;
-      border-radius: 50%;
-      background: conic-gradient(from -30deg,
-        #49a447 0deg 120deg, #ff494d 120deg 240deg, #2194e9 240deg 360deg);
-      box-shadow: 0 -3px 13px #0003, inset 0 0 10px #0002;
-    }
-    .label {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      font-size: clamp(30px, 10vw, 42px);
-      line-height: 1;
-      filter: drop-shadow(0 2px 2px #0005);
-    }
-    .paper { left: 50%; top: 24%; }
-    .scissors { left: 72.5%; top: 63%; }
-    .rock { left: 27.5%; top: 63%; }
-    .hub {
-      position: absolute;
-      inset: 50% auto auto 50%;
-      transform: translate(-50%, -50%);
-      width: 42px;
-      aspect-ratio: 1;
-      border: 4px solid #333;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 2px 4px #0004;
-    }
-    .controls {
-      display: grid;
-      grid-template-columns: 0.93fr 1.07fr;
-      gap: 10px;
-      width: min(100%, 312px);
-      margin: 26px auto 0;
-    }
-    button {
-      min-height: 56px;
-      padding: 8px 4px;
-      border: 0;
-      border-radius: 12px;
-      background: #1875cf;
-      color: white;
-      box-shadow: 0 3px 5px #0003;
-      font: inherit;
-      font-size: clamp(15px, 5.2vw, 22px);
-      font-weight: 800;
-      cursor: pointer;
-    }
-    #repeat { background: #c74e00; color: white; }
-    button:focus-visible { outline: 3px solid #263039; outline-offset: 3px; }
-    button[aria-disabled="true"] { cursor: wait; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>청팀 vs 백팀 가위바위보 룰렛</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #111d32; color: #fff;
+    font-family: system-ui, "Malgun Gothic", sans-serif; text-align: center;
+  }
+  main { max-width: 680px; margin: auto; padding: 20px 16px 32px; }
+  h1 { margin: 0; font-size: clamp(24px, 5vw, 38px); }
+  #result { margin: 8px 0 0; font-size: clamp(42px, 9vw, 72px); line-height: 1.15; }
+  #message { margin: 6px 0 14px; font-size: clamp(20px, 4vw, 27px); font-weight: 750; }
+  .stage { position: relative; width: min(100%, 420px); margin: 0 auto; padding-top: 15px; }
+  .pointer {
+    position: absolute; z-index: 1; top: 0; left: 50%; transform: translateX(-50%);
+    border: 19px solid transparent; border-top: 35px solid #fff;
+    filter: drop-shadow(0 2px 2px #111d32);
+  }
+  .wheel {
+    position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%;
+    border: 6px solid #fff; box-shadow: 0 8px 25px #0005;
+    background: conic-gradient(from -60deg, #ffc65a 0 120deg, #87c9ff 120deg 240deg, #f7a5c5 240deg);
+    color: #13223a; font-weight: 900; font-size: clamp(28px, 7vw, 48px);
+  }
+  .wheel span { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
+  .scissors { left: 50%; top: 17%; }
+  .rock { left: 79%; top: 67%; }
+  .paper { left: 21%; top: 67%; }
+  .wheel::after {
+    content: ""; position: absolute; inset: 45%; border: 4px solid #fff;
+    border-radius: 50%; background: #13223a;
+  }
+  button {
+    display: block; width: min(100%, 420px); min-height: 72px;
+    margin: 18px auto; padding: 10px; border: 0; border-radius: 16px;
+    background: #ffdb71; color: #142039; font: inherit;
+    font-size: clamp(30px, 7vw, 42px); font-weight: 900; cursor: pointer;
+  }
+  button[aria-disabled="true"] { background: #d5dce7; cursor: wait; }
+  button:focus-visible { outline: 4px solid white; outline-offset: 5px; }
+  .scoreboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .team { border-radius: 14px; padding: 12px 4px; }
+  .blue { background: #174c9e; }
+  .white { background: #f7f9ff; color: #142039; }
+  h2, .team p { margin: 0; }
+  h2 { font-size: 28px; }
+  .rate { font-size: clamp(27px, 6.5vw, 40px); font-weight: 900; }
+  .count, #rounds { font-size: clamp(17px, 3.8vw, 22px); }
+  #rounds { margin: 10px 0 0; }
+</style>
 </head>
 <body>
-  <main>
-    <h1>🎯 가위바위보 룰렛 🎯</h1>
-    <p id="result" role="status" aria-atomic="true">준비!</p>
-    <div class="roulette" aria-hidden="true">
-      <div class="pointer"></div>
-      <div id="wheel">
-        <span class="label scissors">✌️</span>
-        <span class="label rock">👊</span>
-        <span class="label paper">✋</span>
+<main>
+  <h1>청팀 vs 백팀 가위바위보 룰렛</h1>
+  <div role="status" aria-atomic="true">
+    <p id="result">준비!</p>
+    <p id="message">청팀부터 돌려 주세요</p>
+  </div>
+
+  <div class="stage" aria-hidden="true">
+    <div class="pointer"></div>
+    <div class="wheel" id="wheel">
+      <span class="scissors">가위</span>
+      <span class="rock">바위</span>
+      <span class="paper">보</span>
+    </div>
+  </div>
+
+  <button type="button" id="spin">돌리기</button>
+
+  <section aria-label="팀별 경기 기록">
+    <div class="scoreboard">
+      <div class="team blue">
+        <h2>청팀</h2>
+        <p class="rate" id="blueRate">0%</p>
+        <p class="count" id="blueWins">0승 0패</p>
       </div>
-      <div class="hub"></div>
+      <div class="team white">
+        <h2>백팀</h2>
+        <p class="rate" id="whiteRate">0%</p>
+        <p class="count" id="whiteWins">0승 0패</p>
+      </div>
     </div>
-    <div class="controls">
-      <button id="spin" type="button">🎡 돌리기</button>
-      <button id="repeat" type="button">🔄 다시 돌리기</button>
-    </div>
-  </main>
+    <p id="rounds">전체 0경기 · 무승부 0회</p>
+  </section>
+</main>
 
-  <script>
-    const choices = ['보 ✋', '가위 ✌️', '바위 👊'];
-    const wheel = document.getElementById('wheel');
-    const result = document.getElementById('result');
-    const button = document.getElementById('spin');
-    const repeat = document.getElementById('repeat');
-    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-    const labels = [...wheel.querySelectorAll('.label')];
-    let angle = 0;
-    let spinning = false;
+<script>
+  const hands = ["가위", "바위", "보"];
+  const byId = (id) => document.getElementById(id);
+  const wheel = byId("wheel");
+  const spin = byId("spin");
+  const result = byId("result");
+  const message = byId("message");
+  const randomWord = new Uint32Array(1);
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-    async function spin() {
-      if (spinning) return;
+  let rotation = 0;
+  let spinning = false;
+  let blueHand = null;
+  let blueWins = 0;
+  let whiteWins = 0;
+  let ties = 0;
 
-      spinning = true;
-      button.setAttribute('aria-disabled', 'true');
-      repeat.setAttribute('aria-disabled', 'true');
-      result.textContent = '도는 중…';
+  // 같은 결과가 연속으로 나올 수 있도록 매번 독립적으로 뽑는다.
+  function randomInt(max) {
+    const range = 2 ** 32;
+    const limit = range - (range % max);
+    do {
+      crypto.getRandomValues(randomWord);
+    } while (randomWord[0] >= limit);
+    return randomWord[0] % max;
+  }
 
-      // 각 칸의 손 모양을 위쪽 화살표에 맞춘다.
-      const winner = Math.floor(Math.random() * choices.length);
-      const target = (360 - winner * 120) % 360;
-      const distance = (target - angle + 360) % 360;
-      const end = angle + 5 * 360 + distance;
+  function updateScore() {
+    const total = blueWins + whiteWins + ties;
+    byId("blueRate").textContent = Math.round(100 * blueWins / total) + "%";
+    byId("whiteRate").textContent = Math.round(100 * whiteWins / total) + "%";
+    byId("blueWins").textContent = blueWins + "승 " + whiteWins + "패";
+    byId("whiteWins").textContent = whiteWins + "승 " + blueWins + "패";
+    byId("rounds").textContent = "전체 " + total + "경기 · 무승부 " + ties + "회";
+  }
 
-      if (!reducedMotion.matches) {
-        const animation = wheel.animate(
-          [{ transform: 'rotate(' + angle + 'deg)' },
-           { transform: 'rotate(' + end + 'deg)' }],
-          { duration: 3400, easing: 'cubic-bezier(0.12, 0.65, 0.2, 1)' }
-        );
-        for (const label of labels) {
-          label.animate([{ rotate: -angle + 'deg' }, { rotate: -end + 'deg' }],
-            { duration: 3400, easing: 'cubic-bezier(0.12, 0.65, 0.2, 1)' });
-        }
-        await animation.finished;
-      }
+  spin.addEventListener("click", async () => {
+    if (spinning) return;
+    spinning = true;
+    spin.setAttribute("aria-disabled", "true");
+    spin.textContent = "돌아가는 중…";
 
-      angle = target;
-      wheel.style.transform = 'rotate(' + angle + 'deg)';
-      for (const label of labels) label.style.rotate = -angle + 'deg';
-      result.textContent = choices[winner];
-      repeat.removeAttribute('aria-disabled');
-      button.removeAttribute('aria-disabled');
-      spinning = false;
+    const isBlue = blueHand === null;
+    result.textContent = "돌아가는 중";
+    message.textContent = isBlue ? "청팀 차례" : "백팀 차례";
+
+    const hand = randomInt(hands.length);
+    // 화살표 아래에 당첨 칸이 오도록 칸 중앙에서 최대 45도 이동한다.
+    const offset = randomInt(91) - 45;
+    const target = (360 - hand * 120 - offset) % 360;
+    const normalizedTarget = (target + 360) % 360;
+    const distance = (normalizedTarget - rotation + 360) % 360;
+    const end = rotation + (4 + randomInt(4)) * 360 + distance;
+
+    if (!reducedMotion.matches && typeof wheel.animate === "function") {
+      const animation = wheel.animate(
+        [{ transform: `rotate(${rotation}deg)` }, { transform: `rotate(${end}deg)` }],
+        { duration: 2900 + randomInt(1201), easing: "cubic-bezier(.16,.7,.18,1)" }
+      );
+      await animation.finished;
     }
 
-    button.addEventListener('click', spin);
-    repeat.addEventListener('click', spin);
-  </script>
+    rotation = normalizedTarget;
+    wheel.style.transform = `rotate(${rotation}deg)`;
+    result.textContent = hands[hand];
+
+    if (isBlue) {
+      blueHand = hand;
+      message.textContent = "청팀 결과 · 다음은 백팀";
+      spin.textContent = "백팀 돌리기";
+    } else {
+      const difference = (hand - blueHand + 3) % 3;
+      if (difference === 0) {
+        ties++;
+        message.textContent = "백팀 결과 · 무승부!";
+      } else if (difference === 1) {
+        whiteWins++;
+        message.textContent = "백팀 결과 · 백팀 승리!";
+      } else {
+        blueWins++;
+        message.textContent = "백팀 결과 · 청팀 승리!";
+      }
+      blueHand = null;
+      updateScore();
+      spin.textContent = "다시 돌리기";
+    }
+
+    spinning = false;
+    spin.removeAttribute("aria-disabled");
+  });
+</script>
 </body>
 </html>
+
